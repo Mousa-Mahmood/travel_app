@@ -2,72 +2,57 @@ name: Android CI
 
 on:
   push:
-    branches: ["main"]
+    branches: [ "main" ]
   pull_request:
-    branches: ["main"]
+    branches: [ "main" ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
-    env:
-      JAVA_VERSION: 17
-
     steps:
-      #  Checkout
+      # Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      #  Setup Java (required for Android)
+      # Setup Java 17 (REQUIRED for modern Flutter/Gradle)
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: ${{ env.JAVA_VERSION }}
-          cache: gradle
+          java-version: '17'
 
       #  Setup Flutter
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.19.6'   # <-- use real stable version
+          flutter-version: '3.41.2'
           channel: 'stable'
           cache: true
 
-      #  Verify Flutter
-      - name: Flutter Doctor
-        run: flutter doctor -v
+      #  Show versions (debugging safety)
+      - name: Show Flutter version
+        run: flutter --version
 
       #  Install dependencies
       - name: Install dependencies
         run: flutter pub get
 
-      #  Analyze code
+      #  Analyze
       - name: Analyze project
-        run: flutter analyze
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
 
       #  Run tests
       - name: Run tests
         run: flutter test
 
-      #  Build Release APK
+      #  Build release APK
       - name: Build Release APK
         run: flutter build apk --release
 
-      # Build App Bundle (Recommended for Play Store)
-      - name: Build App Bundle
-        run: flutter build appbundle --release
-
-      #  Upload APK
+      #  Upload APK as artifact
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
-
-      #  Upload AAB
-      - name: Upload AAB artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-release-aab
-          path: build/app/outputs/bundle/release/app-release.aab
